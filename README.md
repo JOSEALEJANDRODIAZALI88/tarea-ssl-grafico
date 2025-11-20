@@ -1,82 +1,81 @@
-1. Descripcion general del proyecto
+# Panel de tipo de cambio del dolar
+
+## 1. Descripcion general del proyecto
 
 Este proyecto implementa un pequeño panel de tipo de cambio del dolar:
 
-La base de datos datos.db contiene alrededor de 20 registros con:
+La base de datos `datos.db` contiene alrededor de 20 registros con:
 
-fecha (cadena)
-
-tipo_cambio (real)
+- `fecha` (cadena)
+- `tipo_cambio` (real)
 
 El backend Flask:
 
-Lee la tabla tipo_cambio.
-
-Expone una API simple en /data que devuelve JSON.
-
-Renderiza una vista en / con un grafico de lineas.
+- Lee la tabla `tipo_cambio`.
+- Expone una API simple en `/data` que devuelve JSON.
+- Renderiza una vista en `/` con un grafico de lineas.
 
 Todo funciona sin acceso a internet, porque:
 
-La base de datos esta embebida (SQLite).
+- La base de datos esta embebida (SQLite).
+- Chart.js se sirve desde `static/chart.min.js`.
+- HTTPS se habilita mediante certificados autofirmados generados con OpenSSL.
 
-Chart.js se sirve desde static/chart.min.js.
+---
 
-HTTPS se habilita mediante certificados autofirmados generados con OpenSSL.
+## 2. Tecnologias utilizadas
 
-2. Tecnologias utilizadas
+- Python 3  
+- Flask (servidor web)  
+- SQLite (base de datos local)  
+- Chart.js (graficos en JavaScript usando archivo local `static/chart.min.js`)  
+- OpenSSL (generacion de `server.key` y `server.crt`)  
+- Git / GitHub (control de versiones y repositorio remoto)
 
-Python 3
+---
 
-Flask (servidor web)
-
-SQLite (base de datos local)
-
-Chart.js (graficos en JavaScript usando archivo local static/chart.min.js)
-
-OpenSSL (generacion de server.key y server.crt)
-
-Git / GitHub (control de versiones y repositorio remoto)
-
-3. Requisitos previos (Windows)
+## 3. Requisitos previos (Windows)
 
 Antes de replicar el proyecto en otra maquina se necesita:
 
-Python 3
+- **Python 3**  
+  - Descargar desde la pagina oficial.  
+  - En el instalador marcar: `Add Python to PATH`.
 
-Descargar desde la pagina oficial.
+- **Git for Windows**  
+  - Provee `git`, Git Bash y `openssl`.
 
-En el instalador marcar: Add Python to PATH.
+- **(Opcional) IDE**  
+  - PyCharm o VS Code para editar el proyecto.
 
-Git for Windows
+Verificaciones rapidas en una terminal de Windows:
 
-Provee git, Git Bash y openssl.
-
-(Opcional) IDE
-
-PyCharm o VS Code para editar el proyecto.
-
-Verificaciones rapidas:
-
+```bash
 python --version
 git --version
-
+```
 
 En Git Bash:
 
+```bash
 openssl version
+```
 
-4. Clonado del repositorio
+---
+
+## 4. Clonado del repositorio
 
 En la maquina de destino:
 
+```bash
 cd C:\Users\TU_USUARIO
 git clone https://github.com/JOSEALEJANDRODIAZALI88/tarea-ssl-grafico.git
 cd tarea-ssl-grafico
-
+```
 
 Estructura esperada:
 
+```text
 tarea-ssl-grafico/
   app.py (o main.py segun la version)
   init_db.py
@@ -87,55 +86,68 @@ tarea-ssl-grafico/
   .gitignore
   README.md
   ...
+```
 
-5. Entorno virtual e instalacion de dependencias
+---
+
+## 5. Entorno virtual e instalacion de dependencias
 
 Para aislar las dependencias en la maquina de destino:
 
+```bash
 cd C:\Users\TU_USUARIO\tarea-ssl-grafico
 python -m venv venv
 .\venv\Scripts\Activate.ps1
 pip install flask
+```
 
-
-El prompt mostrara (venv) cuando el entorno virtual este activo.
+El prompt mostrara `(venv)` cuando el entorno virtual este activo.
 
 Para desactivar el entorno virtual:
 
+```bash
 deactivate
+```
 
-6. Generacion y estructura de la base de datos
+---
 
-El archivo init_db.py crea y rellena la base SQLite datos.db.
+## 6. Generacion y estructura de la base de datos
+
+El archivo `init_db.py` crea y rellena la base SQLite `datos.db`.
 
 Desde la raiz del proyecto:
 
+```bash
 .\venv\Scripts\Activate.ps1
 python init_db.py
-
+```
 
 Logica principal del script:
 
-Eliminar la tabla tipo_cambio si existe.
+- Eliminar la tabla `tipo_cambio` si existe.  
+- Crear la tabla:
 
-Crear la tabla:
-
+```sql
 CREATE TABLE tipo_cambio (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   fecha TEXT NOT NULL,
   tipo_cambio REAL NOT NULL
 );
+```
 
+- Insertar aproximadamente 20 filas con fechas consecutivas y valores de tipo de cambio simulados.
 
-Insertar aproximadamente 20 filas con fechas consecutivas y valores de tipo de cambio simulados.
+Resultado: archivo `datos.db` en la raiz del proyecto, listo para ser usado por Flask.
 
-Resultado: archivo datos.db en la raiz del proyecto, listo para ser usado por Flask.
+---
 
-7. Logica del backend (Flask + SQLite)
-7.1. Funcion de acceso a datos
+## 7. Logica del backend (Flask + SQLite)
 
-En el archivo principal (app.py o main.py) se usa una funcion de este estilo:
+### 7.1. Funcion de acceso a datos
 
+En el archivo principal (`app.py` o `main.py`) se usa una funcion de este estilo:
+
+```python
 def get_data():
     conn = sqlite3.connect("datos.db")
     cur = conn.cursor()
@@ -146,20 +158,19 @@ def get_data():
     for fecha, valor in rows:
         puntos.append({"x": fecha, "y": valor})
     return puntos
-
+```
 
 Comportamiento:
 
-Abre la base de datos datos.db.
+- Abre la base de datos `datos.db`.  
+- Ejecuta una consulta ordenando por fecha.  
+- Construye una lista de objetos con claves `x` (fecha) e `y` (tipo de cambio) para poder serializar en JSON.
 
-Ejecuta una consulta ordenando por fecha.
-
-Construye una lista de objetos con claves x (fecha) e y (tipo de cambio) para poder serializar en JSON.
-
-7.2. Rutas principales de Flask
+### 7.2. Rutas principales de Flask
 
 Rutas expuestas por la aplicacion:
 
+```python
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -167,37 +178,32 @@ def index():
 @app.route("/data")
 def data():
     return jsonify(get_data())
+```
 
+- `GET /` entrega la plantilla HTML con el grafico.  
+- `GET /data` entrega los datos en JSON, consumidos desde el frontend mediante `fetch`.
 
-GET / entrega la plantilla HTML con el grafico.
+---
 
-GET /data entrega los datos en JSON, consumidos desde el frontend mediante fetch.
+## 8. Frontend y grafico con Chart.js
 
-8. Frontend y grafico con Chart.js
-8.1. Plantilla HTML (index.html)
+### 8.1. Plantilla HTML (`index.html`)
 
-El archivo templates/index.html define:
+El archivo `templates/index.html` define:
 
-Un diseño tipo dashboard:
-
-Titulo general del panel.
-
-Subtitulo explicativo.
-
-Una tarjeta central donde se incrusta el grafico.
-
-Un <canvas id="grafico"> donde se dibuja la serie.
-
-Estilos CSS integrados que dan:
-
-Fondo oscuro.
-
-Tarjeta con bordes redondeados y sombras.
-
-Tipografia clara y jerarquia visual.
+- Un diseño tipo dashboard:
+  - Titulo general del panel.
+  - Subtitulo explicativo.
+  - Una tarjeta central donde se incrusta el grafico.
+- Un `<canvas id="grafico">` donde se dibuja la serie.
+- Estilos CSS integrados que dan:
+  - Fondo oscuro.
+  - Tarjeta con bordes redondeados y sombras.
+  - Tipografia clara y jerarquia visual.
 
 Ejemplo de inclusion de Chart.js y logica basica:
 
+```html
 <script src="/static/chart.min.js"></script>
 <script>
   fetch("/data")
@@ -223,174 +229,184 @@ Ejemplo de inclusion de Chart.js y logica basica:
       });
     });
 </script>
+```
 
-8.2. Carga local de Chart.js
+### 8.2. Carga local de Chart.js
 
 Chart.js se almacena localmente en:
 
+```text
 static/chart.min.js
-
+```
 
 y se referencia en la plantilla con:
 
+```html
 <script src="/static/chart.min.js"></script>
-
+```
 
 De esta forma, la aplicacion no necesita acceder a ningun CDN en internet para renderizar el grafico; todo se sirve desde el propio servidor Flask.
 
-9. Ejecucion en HTTP (modo basico)
+---
+
+## 9. Ejecucion en HTTP (modo basico)
 
 Con entorno virtual activo y base de datos creada:
 
+```bash
 cd C:\Users\TU_USUARIO\tarea-ssl-grafico
 .\venv\Scripts\Activate.ps1
 python app.py
+```
 
+o:
 
-o
-
+```bash
 python main.py
-
+```
 
 (segun el nombre del archivo principal del proyecto).
 
 Por defecto, Flask escucha en:
 
-http://127.0.0.1:5000
-
-http://localhost:5000
+- `http://127.0.0.1:5000`  
+- `http://localhost:5000`
 
 Comprobaciones:
 
-Vista principal
-http://localhost:5000/
-→ Se debe mostrar el panel con el grafico de tipo de cambio (linea sobre el tiempo).
+**Vista principal**  
+`http://localhost:5000/`  
+-> Se debe mostrar el panel con el grafico de tipo de cambio (linea sobre el tiempo).
 
-API de datos
-http://localhost:5000/data
-→ Se debe mostrar JSON con listas de objetos, por ejemplo:
+**API de datos**  
+`http://localhost:5000/data`  
+-> Se debe mostrar JSON con listas de objetos, por ejemplo:
 
+```json
 [
   {"x": "2025-01-01", "y": 6.9},
   {"x": "2025-01-02", "y": 6.91}
 ]
-
+```
 
 Si ambas rutas funcionan, la parte funcional de la aplicacion (sin SSL) ya esta replicada correctamente.
 
-10. Habilitacion de HTTPS con OpenSSL
+---
 
-Para cumplir con la parte de SSL/TLS, se usan certificados autofirmados generados con openssl (incluido en Git Bash).
+## 10. Habilitacion de HTTPS con OpenSSL
 
-10.1. Generar certificados autofirmados
+Para cumplir con la parte de SSL/TLS, se usan certificados autofirmados generados con `openssl` (incluido en Git Bash).
+
+### 10.1. Generar certificados autofirmados
 
 Desde Git Bash, en la carpeta del proyecto:
 
+```bash
 cd /c/Users/TU_USUARIO/tarea-ssl-grafico
 openssl req -newkey rsa:2048 -nodes -keyout server.key -x509 -days 365 -out server.crt
+```
 
+Durante el asistente de `openssl` completar:
 
-Durante el asistente de openssl completar:
-
-Country Name: por ejemplo BO.
-
-State or Province Name, Locality Name, Organization Name: opcionales.
-
-Common Name: escribir localhost (importante para pruebas locales).
-
-Email Address: opcional.
+- `Country Name`: por ejemplo `BO`.  
+- `State or Province Name`, `Locality Name`, `Organization Name`: opcionales.  
+- `Common Name`: escribir `localhost` (importante para pruebas locales).  
+- `Email Address`: opcional.
 
 Esto generara dos archivos en la raiz:
 
-server.key → clave privada del servidor.
+- `server.key` → clave privada del servidor.  
+- `server.crt` → certificado autofirmado del servidor.
 
-server.crt → certificado autofirmado del servidor.
+### 10.2. Ejecutar Flask en HTTPS
 
-10.2. Ejecutar Flask en HTTPS
+En el archivo principal (`app.py` o `main.py`) se debe configurar:
 
-En el archivo principal (app.py o main.py) se debe configurar:
-
+```python
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8443, ssl_context=("server.crt", "server.key"))
-
+```
 
 Con esto:
 
-El servidor expone HTTPS en el puerto 8443.
-
-Usa server.crt y server.key para establecer el canal cifrado.
+- El servidor expone HTTPS en el puerto `8443`.  
+- Usa `server.crt` y `server.key` para establecer el canal cifrado.
 
 Para levantar la aplicacion en HTTPS:
 
+```bash
 cd C:\Users\TU_USUARIO\tarea-ssl-grafico
 .\venv\Scripts\Activate.ps1
 python app.py
-
+```
 
 Luego, en el navegador:
 
-https://localhost:8443/
+- `https://localhost:8443/`
 
-
-El navegador mostrara una advertencia de seguridad porque el certificado es autofirmado y no proviene de una autoridad certificadora.
+El navegador mostrara una advertencia de seguridad porque el certificado es autofirmado y no proviene de una autoridad certificadora.  
 En un entorno de laboratorio se puede continuar pulsando “Avanzado / Continuar”.
 
 La pagina que se muestra es el mismo panel con el grafico, ahora servido sobre HTTPS.
 
-11. Resumen general para replicacion
+---
+
+## 11. Resumen general para replicacion
 
 Para replicar completamente el proyecto en cualquier maquina Windows:
 
-Clonar el repositorio desde GitHub:
+1. Clonar el repositorio desde GitHub:
 
-git clone https://github.com/JOSEALEJANDRODIAZALI88/tarea-ssl-grafico.git
+   ```bash
+   git clone https://github.com/JOSEALEJANDRODIAZALI88/tarea-ssl-grafico.git
+   ```
 
+2. Crear y activar un entorno virtual, e instalar Flask:
 
-Crear y activar un entorno virtual, e instalar Flask:
+   ```bash
+   python -m venv venv
+   .\venv\Scripts\Activate.ps1
+   pip install flask
+   ```
 
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install flask
+3. Generar la base de datos local ejecutando:
 
+   ```bash
+   python init_db.py
+   ```
 
-Generar la base de datos local ejecutando:
+4. Ejecutar en HTTP con:
 
-python init_db.py
+   ```bash
+   python app.py
+   ```
 
+   y verificar:
 
-Ejecutar en HTTP con:
+   - `http://localhost:5000/` (vista)  
+   - `http://localhost:5000/data` (JSON)
 
-python app.py
+5. Generar certificados SSL con OpenSSL en Git Bash:
 
+   ```bash
+   openssl req -newkey rsa:2048 -nodes -keyout server.key -x509 -days 365 -out server.crt
+   ```
 
-y verificar:
+6. Configurar Flask para HTTPS:
 
-http://localhost:5000/ (vista)
+   ```python
+   if __name__ == "__main__":
+       app.run(host="0.0.0.0", port=8443, ssl_context=("server.crt", "server.key"))
+   ```
 
-http://localhost:5000/data (JSON)
+7. Ejecutar en HTTPS y acceder a:
 
-Generar certificados SSL con OpenSSL en Git Bash:
-
-openssl req -newkey rsa:2048 -nodes -keyout server.key -x509 -days 365 -out server.crt
-
-
-Configurar Flask para HTTPS:
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8443, ssl_context=("server.crt", "server.key"))
-
-
-Ejecutar en HTTPS y acceder a:
-
-https://localhost:8443/
-
+   - `https://localhost:8443/`
 
 Explicar al docente que:
 
-El grafico se alimenta de una tabla local con aproximadamente 20 registros de tipo de cambio.
+- El grafico se alimenta de una tabla local con aproximadamente 20 registros de tipo de cambio.  
+- El proyecto no depende de internet (base de datos y libreria de graficos son locales).  
+- La comunicacion entre cliente y servidor esta cifrada usando SSL/TLS, con certificados generados mediante OpenSSL.
 
-El proyecto no depende de internet (base de datos y libreria de graficos son locales).
-
-La comunicacion entre cliente y servidor esta cifrada usando SSL/TLS, con certificados generados mediante OpenSSL.
-
-Con estos pasos, cualquier persona puede replicar el entorno y comprobar el funcionamiento completo de la aplicacion tal como fue diseñada para la tarea
+Con estos pasos, cualquier persona puede replicar el entorno y comprobar el funcionamiento completo de la aplicacion tal como fue diseñada para la tarea.
