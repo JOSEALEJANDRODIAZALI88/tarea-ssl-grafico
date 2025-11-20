@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel tipo de cambio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #0b1120;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56,189,248,0.15);
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #1e293b, #020617);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .shell {
+      width: 100%;
+      max-width: 960px;
+    }
+    .title {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 18px;
+      padding: 20px 24px 24px;
+      box-shadow: 0 18px 35px rgba(15,23,42,0.75);
+      border: 1px solid rgba(148,163,184,0.25);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 500;
+    }
+    .chip {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      white-space: nowrap;
+    }
+    .meta {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      height: 420px;
+    }
+    @media (max-width: 768px) {
+      .card {
+        padding: 16px 16px 20px;
+      }
+      .chart-wrap {
+        height: 320px;
+      }
+      .title {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <h1 class="title">Panel tipo de cambio del dolar</h1>
+      <p class="subtitle">Serie diaria simulada para demostrar graficos locales sin acceso a internet.</p>
+    </header>
+
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Evolucion del tipo de cambio</div>
+          <div class="meta">
+            <span>Fuente: base local datos.db</span>
+            <span>Moneda: BOB por USD</span>
+          </div>
+        </div>
+        <span class="chip">Demo academica</span>
+      </div>
+
+      <div class="chart-wrap">
+        <canvas id="grafico"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/chart.min.js"></script>
+  <script>
+    fetch("/data")
+      .then(function(r){ return r.json(); })
+      .then(function(puntos){
+        var etiquetas = puntos.map(function(p){ return p.x; });
+        var valores = puntos.map(function(p){ return p.y; });
+
+        var ctx = document.getElementById("grafico").getContext("2d");
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: etiquetas,
+            datasets: [{
+              label: "Tipo de cambio del dolar",
+              data: valores,
+              borderColor: "#38bdf8",
+              backgroundColor: "rgba(56,189,248,0.16)",
+              borderWidth: 2.4,
+              tension: 0.3,
+              pointRadius: 3,
+              pointHoverRadius: 5,
+              pointBorderColor: "#0f172a",
+              pointBackgroundColor: "#38bdf8",
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: true,
+                labels: {
+                  color: "#e5e7eb",
+                  usePointStyle: true,
+                  boxWidth: 8
+                }
+              },
+              tooltip: {
+                backgroundColor: "#020617",
+                borderColor: "rgba(148,163,184,0.5)",
+                borderWidth: 1,
+                titleColor: "#e5e7eb",
+                bodyColor: "#e5e7eb"
+              }
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "Fecha",
+                  color: "#9ca3af"
+                },
+                ticks: {
+                  color: "#9ca3af",
+                  maxRotation: 45,
+                  minRotation: 45
+                },
+                grid: {
+                  color: "rgba(148,163,184,0.15)"
+                }
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: "Tipo de cambio",
+                  color: "#9ca3af"
+                },
+                ticks: {
+                  color: "#9ca3af"
+                },
+                grid: {
+                  color: "rgba(148,163,184,0.15)"
+                }
+              }
+            }
+          }
+        });
+      });
+  </script>
+</body>
+</html>
